@@ -150,7 +150,7 @@ module.exports = {
                     {name: `Summoner name`, value: res[0].name, inline: true},
                     {name: `Summoner level`, value: res[0].level.toString(), inline: true},
                     {name: `** **`, value: `** **`},
-                    //{name: `TOP 3 mastery`, value: mastery3, inline: true},
+                    {name: `TOP 3 mastery`, value: mastery3, inline: true},
                     {name: `Ranked`, value: rankemb, inline: true}
                 )
             interaction.reply({embeds: [searchFound], ephemeral: false});
@@ -221,7 +221,7 @@ module.exports = {
                                 {name: `Summoner name`, value: values.response.name, inline: true},
                                 {name: `Summoner level`, value: values.response.summonerLevel.toString(), inline: true},
                                 {name: `** **`, value: `** **`},
-                                //{name: `TOP 3 mastery`, value: mastery3, inline: true},
+                                {name: `TOP 3 mastery`, value: mastery3, inline: true},
                                 {name: `Ranked`, value: rankemb, inline: true}
                             )
                         interaction.reply({embeds: [searchFound], ephemeral: false});
@@ -267,7 +267,6 @@ function getChampName(id) {
         let championList = list.data;
 
         for (var i in championList) {
-
             if (championList[i].key == id) {
                 //console.log(championList[i].id)
                 return new Promise((res, rej) => {

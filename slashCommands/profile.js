@@ -42,6 +42,7 @@ module.exports = {
     let rankemb = "";
 
     con.query(`SELECT * FROM game_user WHERE id='${member.id}'`, function (err, res){
+      console.log(err);
       if(res.length > 0){
         console.log(res[0]);
         playerBE = res[0].blue.toString()
