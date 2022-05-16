@@ -69,6 +69,15 @@ module.exports = {
 
                     interaction.reply({embeds: [bumped]});
                 }
+            } else {
+                const noserver = new MessageEmbed()
+                .setColor(`DARK_RED`)
+                .setTitle(`Bumping Failed...`)
+                .setFooter({text: premb.footertext, iconURL: client.user.displayAvatarURL()})
+                .setThumbnail(`https://assets.porobuddy.xyz/poros/sad.png`)
+                .setDescription(`Oh wow. Your server is not listed on our page, please [list it](https://porobuddy.xyz) so you can use this command!`)
+
+                interaction.reply({embeds: [noserver]});
             }
         })
 

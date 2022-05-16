@@ -1,5 +1,5 @@
 {
-    "riotAPI": "RGAPI-e61544f3-7eeb-47fd-ad4a-8dd97c4e09f0",
+    "riotAPI": "RGAPI-504d391c-355d-41a5-8818-990a24f8f3ae",
     "prefix": "!",
     "loadSlashsGlobal": false, "_COMMENT_": "Set it to true, when your Slash Commands are ready, false loads instant true loads slow but stable! (GLOBAL/GUILD COMMANDS, DISCORD DOCS!)",
     "slashCommandsDirs": [

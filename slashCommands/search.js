@@ -46,214 +46,121 @@ module.exports = {
         let summoner = options.getString("summoner_name");
 		let region = options.getString("region");
         let rankemb = "";
-        let flexRank = "UNRANKED";
-        let soloRank = "UNRANKED";
-        let mastery3 = "working on it\n";
-
-        let queryChannel = client.channels.cache.get(IC.queries);
-        //console.log(queryChannel);
-        function queryLog(database){
-            let successfulQuery = new MessageEmbed()
-                .setTitle(`SUCCESSFUL QUERY`)
-                .addFields(
-                    {name: `USER`, value: member.user.tag, inline: true},
-                    {name: `GUILD`, value: `${member.guild.name}\n\`${member.guild.id}\``, inline: true},
-                    {name: `QUERY`, value: `${summoner} (${region})`}
-        
-                )
-                .setTimestamp()
-                .setColor("GREEN");
-        
-            if (database){
-                try {
-                    successfulQuery.setDescription(`${emojis.heart} RIOT API queried & database updated!`);
-                    queryChannel.send({embeds: [successfulQuery]});
-                } catch(e){
-                    console.log(e);
-                }
-            } else {
-                try {
-                    queryChannel.send({embeds: [successfulQuery]});
-                } catch(e){
-                    console.log(e);
-                }
-            }
-        }
-
-        const notFound = new MessageEmbed()
-            .setTitle(`We could not find the Summoner`)
-            .setFooter(emb.footertext)
-            .setDescription(`You tried to search summoner \`${summoner}\` from region \`${region}\`\n\nMaybe try searching from different region?`);
-
-        const unsuccessfulQuery = new MessageEmbed()
-            .setTitle(`UNSUCCESSFUL QUERY`)
-            .addFields(
-                {name: `USER`, value: member.user.tag, inline: true},
-                {name: `GUILD`, value: `${member.guild.name}\n\`${member.guild.id}\``, inline: true},
-                {name: `QUERY`, value: `${summoner} (${region})`}
-
-            )
-            .setTimestamp()
-            .setColor("RED");
-
-        con.query(`SELECT * FROM queries WHERE name='${summoner}' AND region='${region}'`, function (err, res){
-            if(res.length > 0 && checkTime(res[0].updated)){
-                console.log(`FOUND FROM DATABASE OLD STUFF`)
-                 
-                if(res[0].solo_rank === "IRON")
-                    rankemb += `**Solo:** ${emojis.iron} Iron\n`
-                else if(res[0].solo_rank === "BRONZE")
-                    rankemb += `**Solo:** ${emojis.bronze} Bronze\n`
-                else if(res[0].solo_rank === "SILVER")
-                    rankemb += `**Solo:** ${emojis.silver} Silver\n`
-                else if(res[0].solo_rank === "GOLD")
-                    rankemb += `**Solo:** ${emojis.gold} Gold\n`
-                else if(res[0].solo_rank === "PLATINUM")
-                    rankemb += `**Solo:** ${emojis.platinum} Platinum\n`
-                else if(res[0].solo_rank === "DIAMOND")
-                    rankemb += `**Solo:** ${emojis.diamond} Diamond\n`
-                else if(res[0].solo_rank === "MASTER")
-                    rankemb += `**Solo:** ${emojis.master} Master\n`
-                else if(res[0].solo_rank === "GRANDMASTER")
-                    rankemb += `**Solo:** ${emojis.grandmaster} Grandmaster\n`
-                else if(res[0].solo_rank === "CHALLENGER")
-                    rankemb += `**Solo:** ${emojis.challenger} Challenger\n`
-                else
-                    rankemb += `**Solo:** ${emojis.unranked} Unranked\n`
-
-
-                if(res[0].flex_rank === "IRON")
-                    rankemb += `**Flex:** ${emojis.iron} Iron\n`
-                else if(res[0].flex_rank === "BRONZE")
-                    rankemb += `**Flex:** ${emojis.bronze} Bronze\n`
-                else if(res[0].flex_rank === "SILVER")
-                    rankemb += `**Flex:** ${emojis.silver} Silver\n`
-                else if(res[0].flex_rank === "GOLD")
-                    rankemb += `**Flex:** ${emojis.gold} Gold\n`
-                else if(res[0].flex_rank === "PLATINUM")
-                    rankemb += `**Flex:** ${emojis.platinum} Platinum\n`
-                else if(res[0].flex_rank === "DIAMOND")
-                    rankemb += `**Flex:** ${emojis.diamond} Diamond\n`
-                else if(res[0].flex_rank === "MASTER")
-                    rankemb += `**Flex:** ${emojis.master} Master\n`
-                else if(res[0].flex_rank === "GRANDMASTER")
-                    rankemb += `**Flex:** ${emojis.grandmaster} Grandmaster\n`
-                else if(res[0].flex_rank === "CHALLENGER")
-                    rankemb += `**Flex:** ${emojis.challenger} Challenger\n`
-                else
-                    rankemb += `**Flex:** ${emojis.unranked} Unranked\n`
-
-            const searchFound = new MessageEmbed()
-                .setTitle(`Found Summoner!`)
-                .setThumbnail(`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${res[0].icon.toString()}.jpg`)
-                .addFields(
-                    {name: `Summoner name`, value: res[0].name, inline: true},
-                    {name: `Summoner level`, value: res[0].level.toString(), inline: true},
-                    {name: `** **`, value: `** **`},
-                    {name: `TOP 3 mastery`, value: mastery3, inline: true},
-                    {name: `Ranked`, value: rankemb, inline: true}
-                )
-            interaction.reply({embeds: [searchFound], ephemeral: false});
-            queryLog(false, queryChannel)
-            }
-            else {
+        let puuid;
+        let flexrank = "UNRANKED";
+        let solorank = "UNRANKED";
+        let icon = 0;
+        let level = 0;
+        let embed = new MessageEmbed()
+        con.query(`SELECT * FROM queries WHERE name='${summoner}' AND region='${region}'`, function (eCheck, rCheck){
+            console.log(eCheck)
+            console.log(rCheck[0])
+           if(rCheck.length > 0 && checkTime(rCheck[0].updated)){
+               flexrank = rCheck[0].flex_rank;
+               solorank = rCheck[0].solo_rank;
+               icon += rCheck[0].icon;
+               level += rCheck[0].level;
+               puuid = rCheck[0].id;
+               constructRankEmbed();
+               constructEmbed();
+               updateDatabase(rCheck.length > 0);
+           } else {
                 ritoapi.Summoner.getByName(summoner, region).then((values) => {
                     ritoapi.League.bySummoner(values.response.id, region).then((rank) => {
-                        ritoapi.Champion.masteryBySummoner(values.response.id, region).then((mastery) => {      
-                            for(i = 0; i <= 2; i++){
-                                mastery3 += `**${i + 1}.** ${getChampName(mastery.response[i].championId)} ${emojis.mastery} ${mastery.response[i].championPoints}\n`
+                        for(i = 0; i < rank.response.length; i++){
+                            if(rank.response[i].queueType === "RANKED_SOLO_5x5") {
+                                solorank = rank.response[i].tier
                             }
-        
-                            for(i = 0; i < rank.response.length; i++){
-                                if(rank.response[i].queueType === "RANKED_SOLO_5x5") {
-                                    soloRank = rank.response[i].tier 
-                                    if(rank.response[i].tier === "IRON")
-                                        rankemb += `**Solo:** ${emojis.iron} Iron\n`
-                                    else if(rank.response[i].tier === "BRONZE")
-                                        rankemb += `**Solo:** ${emojis.bronze} Bronze\n`
-                                    else if(rank.response[i].tier === "SILVER")
-                                        rankemb += `**Solo:** ${emojis.silver} Silver\n`
-                                    else if(rank.response[i].tier === "GOLD")
-                                        rankemb += `**Solo:** ${emojis.gold} Gold\n`
-                                    else if(rank.response[i].tier === "PLATINUM")
-                                        rankemb += `**Solo:** ${emojis.platinum} Platinum\n`
-                                    else if(rank.response[i].tier === "DIAMOND")
-                                        rankemb += `**Solo:** ${emojis.diamond} Diamond\n`
-                                    else if(rank.response[i].tier === "MASTER")
-                                        rankemb += `**Solo:** ${emojis.master} Master\n`
-                                    else if(rank.response[i].tier === "GRANDMASTER")
-                                        rankemb += `**Solo:** ${emojis.grandmaster} Grandmaster\n`
-                                    else if(rank.response[i].tier === "CHALLENGER")
-                                        rankemb += `**Solo:** ${emojis.challenger} Challenger\n`
-                                    else
-                                        rankemb += `**Solo:** ${emojis.unranked} Unranked\n`
-                                }
-                                if(rank.response[i].queueType === "RANKED_FLEX_SR") {
-                                    flexRank = rank.response[i].tier 
-                                    if(rank.response[i].tier === "IRON")
-                                        rankemb += `**Flex:** ${emojis.iron} Iron\n`
-                                    else if(rank.response[i].tier === "BRONZE")
-                                        rankemb += `**Flex:** ${emojis.bronze} Bronze\n`
-                                    else if(rank.response[i].tier === "SILVER")
-                                        rankemb += `**Flex:** ${emojis.silver} Silver\n`
-                                    else if(rank.response[i].tier === "GOLD")
-                                        rankemb += `**Flex:** ${emojis.gold} Gold\n`
-                                    else if(rank.response[i].tier === "PLATINUM")
-                                        rankemb += `**Flex:** ${emojis.platinum} Platinum\n`
-                                    else if(rank.response[i].tier === "DIAMOND")
-                                        rankemb += `**Flex:** ${emojis.diamond} Diamond\n`
-                                    else if(rank.response[i].tier === "MASTER")
-                                        rankemb += `**Flex:** ${emojis.master} Master\n`
-                                    else if(rank.response[i].tier === "GRANDMASTER")
-                                        rankemb += `**Flex:** ${emojis.grandmaster} Grandmaster\n`
-                                    else if(rank.response[i].tier === "CHALLENGER")
-                                        rankemb += `**Flex:** ${emojis.challenger} Challenger\n`
-                                    else
-                                        rankemb += `**Flex:** ${emojis.unranked} Unranked\n`
-                                }
+                            if(rank.response[i].queueType === "RANKED_FLEX_SR") {
+                                flexrank = rank.response[i].tier 
                             }
-        
-        
-                        const searchFound = new MessageEmbed()
-                            .setTitle(`Found Summoner!`)
-                            .setThumbnail(`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${values.response.profileIconId.toString()}.jpg`)
-                            .addFields(
-                                {name: `Summoner name`, value: values.response.name, inline: true},
-                                {name: `Summoner level`, value: values.response.summonerLevel.toString(), inline: true},
-                                {name: `** **`, value: `** **`},
-                                {name: `TOP 3 mastery`, value: mastery3, inline: true},
-                                {name: `Ranked`, value: rankemb, inline: true}
-                            )
-                        interaction.reply({embeds: [searchFound], ephemeral: false});
-                        if(res.length == 0){
-                            con.query(`SELECT id, name FROM queries WHERE id='${values.response.puuid}' AND region='${region}'`, function (err2, res2){
-                                if(res2.length > 0){
-                                    queryLog(true, queryChannel)
-                                    con.query(`UPDATE queries SET name='${values.response.name}', region='${region}', icon='${values.response.profileIconId}', level='${values.response.summonerLevel}', solo_rank='${soloRank}', flex_rank='${flexRank}', updated='${moment().format('YYYY-MM-DD HH:mm:ss')}' WHERE id='${values.response.puuid}'`)
-                                } else {
-                                    queryLog(true, queryChannel)
-                                    con.query(`INSERT INTO queries (id, name, region, icon, level, solo_rank, flex_rank) VALUES ('${values.response.puuid}', '${values.response.name}', '${region}', '${values.response.profileIconId}', '${values.response.summonerLevel}', '${soloRank}', '${flexRank}')`)
-                                }
-                            })
-                        } else {
-                            con.query(`SELECT id, name FROM queries WHERE id='${values.response.puuid}' AND region='${region}'`, function (err2, res2){
-                                if(res2.length > 0){
-                                    queryLog(true, queryChannel)
-                                    con.query(`UPDATE queries SET name='${values.response.name}', region='${region}', icon='${values.response.profileIconId}', level='${values.response.summonerLevel}', solo_rank='${soloRank}', flex_rank='${flexRank}', updated='${moment().format('YYYY-MM-DD HH:mm:ss')}' WHERE id='${values.response.puuid}'`)
-                                } else {
-                                    queryLog(true, queryChannel)
-                                    con.query(`INSERT INTO queries (id, name, region, icon, level, solo_rank, flex_rank) VALUES ('${values.response.puuid}', '${values.response.name}', '${region}', '${values.response.profileIconId}', '${values.response.summonerLevel}', '${soloRank}', '${flexRank}')`)
-                                }
-                            })
                         }
-                        });
-                    });
-                }).catch((err) => {
-                    interaction.reply({embeds: [notFound], ephemeral: true})
-                    queryChannel.send({embeds: [unsuccessfulQuery]});
+                        level += values.response.summonerLevel;
+                        icon += values.response.profileIconId;
+                        puuid = values.response.puuid;
+                        constructRankEmbed();
+                        constructEmbed();
+                        updateDatabase();
+                        updateDatabase(rCheck.length > 0);
+                    })
                 })
+           }
+        });
+
+        function constructRankEmbed(){
+            if(solorank === "IRON")
+                rankemb += `**Solo:** ${emojis.iron} Iron\n`
+            else if(solorank === "BRONZE")
+                rankemb += `**Solo:** ${emojis.bronze} Bronze\n`
+            else if(solorank === "SILVER")
+                rankemb += `**Solo:** ${emojis.silver} Silver\n`
+            else if(solorank === "GOLD")
+                rankemb += `**Solo:** ${emojis.gold} Gold\n`
+            else if(solorank === "PLATINUM")
+                rankemb += `**Solo:** ${emojis.platinum} Platinum\n`
+            else if(solorank === "DIAMOND")
+                rankemb += `**Solo:** ${emojis.diamond} Diamond\n`
+            else if(solorank === "MASTER")
+                rankemb += `**Solo:** ${emojis.master} Master\n`
+            else if(solorank === "GRANDMASTER")
+                rankemb += `**Solo:** ${emojis.grandmaster} Grandmaster\n`
+            else if(solorank === "CHALLENGER")
+                rankemb += `**Solo:** ${emojis.challenger} Challenger\n`
+            else if(solorank === "UNRANKED")
+                rankemb += `**Solo:** ${emojis.unranked} Unranked\n`
+
+
+            if(flexrank === "IRON")
+                rankemb += `**Flex:** ${emojis.iron} Iron\n`
+            else if(flexrank === "BRONZE")
+                rankemb += `**Flex:** ${emojis.bronze} Bronze\n`
+            else if(flexrank === "SILVER")
+                rankemb += `**Flex:** ${emojis.silver} Silver\n`
+            else if(flexrank === "GOLD")
+                rankemb += `**Flex:** ${emojis.gold} Gold\n`
+            else if(flexrank === "PLATINUM")
+                rankemb += `**Flex:** ${emojis.platinum} Platinum\n`
+            else if(flexrank === "DIAMOND")
+                rankemb += `**Flex:** ${emojis.diamond} Diamond\n`
+            else if(flexrank === "MASTER")
+                rankemb += `**Flex:** ${emojis.master} Master\n`
+            else if(flexrank === "GRANDMASTER")
+                rankemb += `**Flex:** ${emojis.grandmaster} Grandmaster\n`
+            else if(flexrank === "CHALLENGER")
+                rankemb += `**Flex:** ${emojis.challenger} Challenger\n`
+            else if(flexrank === "UNRANKED")
+                rankemb += `**Flex:** ${emojis.unranked} Unranked\n`
+        }
+
+        function constructEmbed(){
+            console.log(summoner)
+            console.log(level)
+            console.log(rankemb)
+            embed
+            .setThumbnail(`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/${icon}.jpg`)
+            .setURL(`https://porobuddy.xyz/search?summoner_name=${encodeURIComponent(summoner)}&region=${region}`)
+            .setTitle(`Found Summoner!`)
+            .addFields(
+                {name: `Summoner`, value: `${summoner}`, inline: true},
+                {name: `Level`, value: `\`${level}\``, inline: true},
+                {name: `** **`, value: `** **`},
+                {name: `Ranked Placements`, value: `${rankemb}`}
+            )
+
+            interaction.reply({embeds: [embed]});
+        }
+
+        /**
+         * 
+         * @param {*} bool Boolean, false if insert new row
+         */
+        function updateDatabase(bool){
+            if(!bool){
+                con.query(`INSERT INTO queries (id, name, region, icon, level, solo_rank, flex_rank) VALUES (?, ?, '${region}', '${icon}', '${level}', '${solorank}', '${flexrank}')`, [puuid, summoner])
+            } else {
+                con.query(`UPDATE queries SET name=?, icon='${icon}', level='${level}', solo_rank='${solorank}', flex_rank='${flexrank}' WHERE id='${puuid}'`, [summoner])
             }
-        })
+        }
     } catch (e) {
         console.log(String(e.stack).bgRed)
     }
@@ -281,7 +188,7 @@ function getChampName(id) {
 
 function checkTime(date){
     let hours = moment().diff(moment(date), 'hours');
-    if( hours < 3){
+    if( hours < 5){
         return true;
     } else {
         return false;
